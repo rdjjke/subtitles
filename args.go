@@ -12,23 +12,23 @@ type Args struct {
 	End      time.Duration
 	Case     Case
 	Scheme   string
-	FileName string
+	FilePath string
 }
 
 func ParseArgs() Args {
 	a := Args{
 		Start:    0,
 		End:      1000 * time.Hour,
-		Case:     LowerCase,
+		Case:     CaseLower,
 		Scheme:   `$word\t$count\n`,
-		FileName: "",
+		FilePath: "",
 	}
 
-	const timeFmtExplanation = "a sequence of decimal numbers with unit suffix, like \"100s\", \"2.3h\" or \"4h35m10s5ms\""
+	const timeFmtExpl = "a sequence of decimal numbers with unit suffix, like \"100s\", \"2.3h\" or \"4h35m10s5ms\""
 
 	startHelp := fmt.Sprintf(
 		"the time starting from which (inclusive) subtitles should be parsed;\nformat: %s;\ndefault value: 0s.",
-		timeFmtExplanation,
+		timeFmtExpl,
 	)
 	flag.Func("start", startHelp, func(val string) error {
 		if start, err := time.ParseDuration(val); err != nil {
@@ -41,7 +41,7 @@ func ParseArgs() Args {
 
 	endHelp := fmt.Sprintf(
 		"the time before which (exclusive) subtitles should be parsed;\nformat: %s;\ndefault value: 1000h.",
-		timeFmtExplanation,
+		timeFmtExpl,
 	)
 	flag.Func("end", endHelp, func(val string) error {
 		if end, err := time.ParseDuration(val); err != nil {
@@ -52,7 +52,11 @@ func ParseArgs() Args {
 		}
 	})
 
-	caseHelp := "how should the letter case change;\nformat: one of: lower, upper, original, names-with-capital;\ndefault value: lower."
+	caseHelp := fmt.Sprintf(
+		"how should the letter case change;\nformat: one of %v;\ndefault value: %v.",
+		AllCases,
+		CaseLower,
+	)
 	flag.Func("case", caseHelp, func(val string) error {
 		found := false
 		for _, c := range AllCases {
@@ -72,15 +76,17 @@ func ParseArgs() Args {
 		"\tthis string can also contain optional arguments:\n" +
 		"\t- $word argument is replaced by the current processed word from the subtitles file,\n" +
 		"\t- $count argument is replaced by the total number of occurrences of this word in the subtitles file;\n" +
-		"default value: $word\\t$count\\n."
+		fmt.Sprintf("default value: %s.", a.Scheme)
 	flag.Func("scheme", schemeHelp, func(val string) error {
 		a.Scheme = val
 		return nil
 	})
 
-	fileHelp := "the path to a subtitles file;\nformat: any valid path to an existing file;\nif it is not specified, stdin will be used."
+	fileHelp := "the path to a subtitles file;\n" +
+		"format: any valid path to an existing file;\n" +
+		"if it is not specified, stdin will be used."
 	flag.Func("file", fileHelp, func(val string) error {
-		a.FileName = val
+		a.FilePath = val
 		return nil
 	})
 
@@ -91,12 +97,16 @@ func ParseArgs() Args {
 
 type Case string
 
-var AllCases = []Case{LowerCase, UpperCase, OriginalCase, NamesWithCapital}
+var AllCases = []Case{
+	CaseLower,
+	CaseUpper,
+	CaseOriginal,
+	/*CaseNamesWithCapital,*/
+}
 
 const (
-	LowerCase        Case = "lower"
-	UpperCase        Case = "upper"
-	OriginalCase     Case = "original"
-	NamesWithCapital Case = "names-with-capital"
+	CaseLower    Case = "lower"
+	CaseUpper    Case = "upper"
+	CaseOriginal Case = "original"
+	//CaseNamesWithCapital Case = "names-with-capital"
 )
-

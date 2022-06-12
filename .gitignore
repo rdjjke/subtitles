@@ -7,3 +7,5 @@
 # Unignore all directories
 !*/
 
+# Ignore all hidden directories
+*.*/
